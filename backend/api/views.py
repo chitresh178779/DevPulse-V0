@@ -10,12 +10,13 @@ from django.shortcuts import render
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
-from .models import Snippet
-from .serializers import SnippetSerializer  
+from .models import Snippet, ComponentSnippet
+from .serializers import SnippetSerializer, ComponentSnippetSerializer
 from rest_framework import permissions, viewsets
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from allauth.socialaccount.models import SocialAccount, SocialToken
+from rest_framework import generics
 api_key = os.getenv("GENAI_API_KEY")
 print(api_key)
 genai.configure(api_key=api_key)
@@ -77,7 +78,7 @@ class RepoAnalyticsView(APIView):
         # ---> MISSING PIECE 1: Parse the JSON response
         repos = gh_response.json()
         
-        # ... rest of your code ...
+        # ... rest of your code ... 
 
         # ---> MISSING PIECE 1: Parse the JSON response
         repos = gh_response.json()
@@ -240,3 +241,24 @@ class CodeAuditorView(APIView):
             "original_code": code_block,
             "entities": bindable_entities
         })
+# Handles GET (all components) and POST (new component)
+class ComponentListCreateView(generics.ListCreateAPIView):
+    serializer_class = ComponentSnippetSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Only fetch components created by the currently logged-in user
+        return ComponentSnippet.objects.filter(user=self.request.user).order_by('-updated_at')
+
+    def perform_create(self, serializer):
+        # Automatically attach the logged-in user when saving a new snippet
+        serializer.save(user=self.request.user)
+
+# Handles GET (single), PUT (update), and DELETE (remove)
+class ComponentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ComponentSnippetSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Ensure users can only edit/delete their own components
+        return ComponentSnippet.objects.filter(user=self.request.user)

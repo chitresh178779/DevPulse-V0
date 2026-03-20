@@ -17,11 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from api.views import GitHubLogin, RepoAnalyticsView , SnippetViewSet, CodeAuditorView
+from api.views import GitHubLogin, RepoAnalyticsView , SnippetViewSet, CodeAuditorView, ComponentListCreateView, ComponentDetailView
 
 
 router = DefaultRouter()
 router.register(r'snippets', SnippetViewSet, basename='snippet')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,4 +32,6 @@ urlpatterns = [
     path('api/auth/github/login/', GitHubLogin.as_view(), name='github_login'),
     path('api/analytics/repos/', RepoAnalyticsView.as_view(), name='repo_analytics'),
     path('api/utilities/extract/', CodeAuditorView.as_view(), name='code_auditor'),
+    path('api/components/', ComponentListCreateView.as_view(), name='component-list'),
+    path('api/components/<int:pk>/', ComponentDetailView.as_view(), name='component-detail'),
 ]

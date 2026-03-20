@@ -14,7 +14,8 @@ import SnippetCard from './SnippetCard';
 import AddSnippetModal from './AddSnippetModal';
 import RepoAnalytics from './RepoAnalytics';
 import UtilityVault from './UtilityVault';
-import { FolderGit2 ,Wand2} from 'lucide-react';
+import ComponentLibrary from './ComponentLibrary';
+import { FolderGit2 ,Wand2, LayoutTemplate} from 'lucide-react';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
@@ -99,8 +100,8 @@ const openModal = (mode, snippet = null) => {
             className={`nav-item ${activeTab === 'components' ? 'active' : ''}`}
             onClick={() => setActiveTab('components')}
           >
-            <Binary size={18} />
-            <span>Components</span>
+            <LayoutTemplate size={18} />
+            Component Library
           </button>
         </nav>
         <button 
@@ -187,6 +188,8 @@ const openModal = (mode, snippet = null) => {
         </div>
       )}
       {activeTab === 'utilities' && <UtilityVault />}
+
+      {activeTab === 'components' && <ComponentLibrary />}
       </main>
 
       {/* Modal handles creation of new records */}
