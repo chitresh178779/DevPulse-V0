@@ -3,6 +3,7 @@ import os
 import requests
 import google.generativeai as genai
 from datetime import datetime, timezone
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +11,8 @@ from django.shortcuts import render
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
-from .models import Snippet, ComponentSnippet
+from .models import Snippet, ComponentSnippet, CodeAudit
+from .tasks import run_code_audit
 from .serializers import SnippetSerializer, ComponentSnippetSerializer
 from rest_framework import permissions, viewsets
 from django.views.decorators.csrf import csrf_exempt
@@ -262,3 +264,42 @@ class ComponentDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         # Ensure users can only edit/delete their own components
         return ComponentSnippet.objects.filter(user=self.request.user)
+
+
+class CodeAuditSubmitView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        code = request.data.get('code')
+        if not code:
+            return Response({'error': 'No code provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 1. Save the initial pending state to the database
+        audit = CodeAudit.objects.create(user=request.user, code_snippet=code)
+        
+        # 2. Hand the heavy lifting off to Celery in the background!
+        run_code_audit.delay(audit.id)
+        
+        # 3. Instantly return the ID so React can start polling
+        return Response({
+            'message': 'Audit queued successfully', 
+            'audit_id': audit.id
+        }, status=status.HTTP_202_ACCEPTED)
+
+class CodeAuditStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            # Only let users check their own audits
+            audit = CodeAudit.objects.get(id=pk, user=request.user)
+            
+            return Response({
+                'status': audit.status,
+                'security_score': audit.security_score,
+                'performance_score': audit.performance_score,
+                'readability_score': audit.readability_score,
+                'feedback': audit.feedback_json
+            })
+        except CodeAudit.DoesNotExist:
+            return Response({'error': 'Audit not found'}, status=status.HTTP_404_NOT_FOUND)

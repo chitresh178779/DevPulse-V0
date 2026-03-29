@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Callback from './components/Callback';
 import Dashboard from './components/Dashboard';
 import ComponentLibrary from './components/ComponentLibrary';
+import CodeAuditor from './components/CodeAuditor';
 import './App.css'; 
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login/callback" element={<Callback />} />
         <Route path="/dashboard" element={<Dashboard />}  />
         <Route path="/components" element={<ComponentLibrary />} />
+        <Route path="/auditor" element={<CodeAuditor />} />
       </Routes>
     </Router>
   );

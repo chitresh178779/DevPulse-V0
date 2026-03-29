@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { 
   LayoutGrid, 
   ShieldCheck, 
-  Binary, 
   Settings, 
   LogOut, 
-  CircleDot 
+  CircleDot,
+  Shield
 } from 'lucide-react';
 import api from '../services/api'; 
 import './Dashboard.css';
@@ -15,6 +15,7 @@ import AddSnippetModal from './AddSnippetModal';
 import RepoAnalytics from './RepoAnalytics';
 import UtilityVault from './UtilityVault';
 import ComponentLibrary from './ComponentLibrary';
+import CodeAuditor from './CodeAuditor';
 import { FolderGit2 ,Wand2, LayoutTemplate} from 'lucide-react';
 
 const Dashboard = () => {
@@ -111,7 +112,13 @@ const openModal = (mode, snippet = null) => {
             <FolderGit2 size={18} />
             <span>Repo Pulse</span>
           </button>
-
+        <button 
+            className={`nav-item ${activeTab === 'auditor' ? 'active' : ''}`}
+            onClick={() => setActiveTab('auditor')}
+          >
+            <Shield size={18} />
+            <span>Code Auditor</span>
+        </button>
         {/* Updated: Use setIsModalOpen consistently */}
         <button className="nav-item active" onClick={() => openModal('create')}>
           <span>+ New Snippet</span>
@@ -190,6 +197,8 @@ const openModal = (mode, snippet = null) => {
       {activeTab === 'utilities' && <UtilityVault />}
 
       {activeTab === 'components' && <ComponentLibrary />}
+
+      {activeTab === 'auditor' && <CodeAuditor />}
       </main>
 
       {/* Modal handles creation of new records */}

@@ -6,3 +6,4 @@
 .env.production.local
 frontend/.env
 backend/.env
+redis-local/

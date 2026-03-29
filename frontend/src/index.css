@@ -46,3 +46,163 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #3f3f46 transparent;
 }
+
+.code-auditor-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 400px;
+  background-color: #1e1e1e;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #334155;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875rem;
+  resize: vertical;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  /* Prevent the default white outline on click */
+  outline: none; 
+}
+
+.code-auditor-textarea:focus {
+  border-color: #6366f1; /* A nice indigo highlight */
+  box-shadow: 0 0 0 1px #6366f1;
+}
+/* AI Auditor Results Dashboard */
+.audit-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: slideUp 0.4s ease-out forwards;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #334155;
+}
+
+.audit-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* 1-10 Score Cards */
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.score-card {
+  background-color: #1e1e1e;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.score-value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.score-value small {
+  font-size: 1rem;
+  opacity: 0.5;
+  font-weight: 600;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* Feedback Lists */
+.feedback-card {
+  background-color: #121212;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border-left: 4px solid #334155;
+}
+
+.feedback-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.feedback-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feedback-card li {
+  padding-left: 0.5rem;
+}
+
+/* Color Coding Utilities */
+.text-danger { color: #f87171; }
+.text-warning { color: #fbbf24; }
+.text-success { color: #34d399; }
+
+.border-danger { border-left-color: #f87171; background-color: rgba(248, 113, 113, 0.05); }
+.border-warning { border-left-color: #fbbf24; background-color: rgba(251, 191, 36, 0.05); }
+.border-success { border-left-color: #34d399; background-color: rgba(52, 211, 153, 0.05); }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Refactoring Code Blocks */
+.refactor-box {
+  background-color: #0f172a; /* Deep slate background */
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  margin-top: 0.75rem;
+  overflow: hidden;
+}
+
+.refactor-header {
+  background-color: #1e293b;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #94a3b8;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+}
+
+.refactor-code {
+  padding: 1rem;
+  margin: 0;
+  color: #e2e8f0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  white-space: pre-wrap; /* Keeps python indentation intact */
+}

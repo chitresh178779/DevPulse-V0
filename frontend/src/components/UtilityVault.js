@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Braces, Key, FileSearch, Clock, Wand2, ArrowRight } from 'lucide-react';
 import cronstrue from 'cronstrue';
 import api from '../services/api';
@@ -86,25 +86,11 @@ const UtilityVault = () => {
   const [entities, setEntities] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   // Tracks the length of the code to detect large pastes
-  const [lastCodeLength, setLastCodeLength] = useState(0);
-  // The Magic "Auto-Extract on Paste" Hook
-  useEffect(() => {
-    const lengthDiff = Math.abs(masterCode.length - lastCodeLength);
-    
-    // If the code jumps by more than 30 characters at once, it's a paste event!
-    if (lengthDiff > 30 && masterCode.length > 10) {
-      const timer = setTimeout(() => {
-        analyzeCode();
-      }, 800); // Wait 800ms after pasting to trigger the AI
-      
-      return () => clearTimeout(timer);
-    }
-    
-    setLastCodeLength(masterCode.length);
-  }, [masterCode]);
+  const lastCodeLength= useRef(0);
+  const skipNextScan = useRef(false);
 
   // --- 1. The AI Extraction Trigger ---
-  const analyzeCode = async () => {
+  const analyzeCode = useCallback(async () => {
     if (!masterCode.trim()) return;
     setIsAnalyzing(true);
     try {
@@ -116,35 +102,81 @@ const UtilityVault = () => {
       alert("Failed to extract utilities. Check console.");
     }
     setIsAnalyzing(false);
-  };
+  }, [masterCode]);
+  // The Magic "Auto-Extract on Paste" Hook
+  useEffect(() => {
+    if (skipNextScan.current) {
+      skipNextScan.current = false; // Reset the lock for next time
+      lastCodeLength.current = masterCode.length; // Sync the length silently
+      return; // STOP! Do not run the AI scan.
+    }
+    const lengthDiff = Math.abs(masterCode.length - lastCodeLength.current);
+    
+    // If the code jumps by more than 30 characters at once, it's a paste event!
+    if (lengthDiff > 30 && masterCode.length > 10) {
+      const timer = setTimeout(() => {
+        analyzeCode();
+      }, 800); // Wait 800ms after pasting to trigger the AI
+      
+      lastCodeLength.current = masterCode.length;
+      return () => clearTimeout(timer);
+    }
+    
+    lastCodeLength.current = masterCode.length;
+  }, [masterCode, analyzeCode]);
+
+  
+  
 
   // --- 2. The Patentable BSUB Mechanism ---
-  const handleUtilityUpdate = (entityId, newValue) => {
+ const handleUtilityUpdate = (entityId, newValue) => {
+    skipNextScan.current = true;
+
+    // 1. Find the current entity outside of the state setters
+    const entityIndex = entities.findIndex(e => e.id === entityId);
+    if (entityIndex === -1) return;
+    const entity = entities[entityIndex];
+
+    // 2. Calculate the exact final string (with the Quote Preserver)
+    let finalValue = newValue;
+    const originalText = masterCode.substring(entity.startIndex, entity.endIndex);
+    
+    if (originalText.startsWith('"') && !finalValue.startsWith('"')) finalValue = '"' + finalValue;
+    else if (originalText.startsWith("'") && !finalValue.startsWith("'")) finalValue = "'" + finalValue;
+    
+    if (originalText.endsWith('"') && !finalValue.endsWith('"')) finalValue = finalValue + '"';
+    else if (originalText.endsWith("'") && !finalValue.endsWith("'")) finalValue = finalValue + "'";
+
+    // Calculate how much the code is shrinking or growing
+    const lengthDiff = finalValue.length - (entity.endIndex - entity.startIndex);
+
+    // 3. Update Master Code (Independent!)
+    setMasterCode(prevCode => {
+      const before = prevCode.substring(0, entity.startIndex);
+      const after = prevCode.substring(entity.endIndex);
+      return before + finalValue + after;
+    });
+
+    // 4. Update Entities (Independent!)
     setEntities(prevEntities => {
-      const entityIndex = prevEntities.findIndex(e => e.id === entityId);
-      if (entityIndex === -1) return prevEntities;
-
-      const entity = prevEntities[entityIndex];
-      const lengthDifference = newValue.length - (entity.endIndex - entity.startIndex);
-
-      // A. Update the Master Code string live
-      setMasterCode(prevCode => 
-        prevCode.slice(0, entity.startIndex) + newValue + prevCode.slice(entity.endIndex)
-      );
-
-      // B. Shift indices of all subsequent entities so the bind doesn't break
       const newEntities = [...prevEntities];
-      newEntities[entityIndex] = { ...entity, value: newValue, endIndex: entity.startIndex + newValue.length };
+      
+      // Update the current entity's UI value and its new bounds
+      newEntities[entityIndex] = {
+        ...newEntities[entityIndex],
+        value: newValue, 
+        endIndex: newEntities[entityIndex].endIndex + lengthDiff
+      };
 
+      // Shift all the entities below it so they don't lose their alignment
       for (let i = entityIndex + 1; i < newEntities.length; i++) {
-        newEntities[i].startIndex += lengthDifference;
-        newEntities[i].endIndex += lengthDifference;
+        newEntities[i].startIndex += lengthDiff;
+        newEntities[i].endIndex += lengthDiff;
       }
 
       return newEntities;
     });
   };
-
   // --- 3. UI Helpers ---
   const renderUtilityTool = (entity) => {
     const { id, type, value } = entity;
